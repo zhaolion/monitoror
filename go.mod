@@ -22,11 +22,15 @@ require (
 	github.com/jsdidierlaurent/golang-jenkins v0.0.0-20190826091201-0ea4c9df4e09
 	github.com/labstack/echo/v4 v4.1.7
 	github.com/labstack/gommon v0.2.9
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/orcaman/concurrent-map v0.0.0-20190314100340-2693aad1ed75
 	github.com/satori/go.uuid v1.2.0
 	github.com/shuheiktgw/go-travis v0.2.2
+	github.com/sirupsen/logrus v1.2.0
 	github.com/sourcegraph/httpcache v0.0.0-20160524185540-16db777d8ebe
 	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
+	github.com/spf13/cobra v1.0.0
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
@@ -35,4 +39,5 @@ require (
 	golang.org/x/sys v0.0.0-20190801041406-cbf593c0f2f3 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v1.4.0 // indirect
+	gotest.tools/v3 v3.0.2
 )

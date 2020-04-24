@@ -1,9 +1,9 @@
 package monitorables
 
 import (
-	"github.com/monitoror/monitoror/cli"
+	"github.com/monitoror/monitoror/cli/helper"
 	coreModels "github.com/monitoror/monitoror/models"
-	"github.com/monitoror/monitoror/service/store"
+	"github.com/monitoror/monitoror/store"
 )
 
 type Monitorable interface {
@@ -38,18 +38,18 @@ func (m *Manager) register(monitorable Monitorable) {
 }
 
 func (m *Manager) EnableMonitorables() {
-	m.store.Cli.PrintMonitorableHeader()
+	m.store.CliHelper.PrintMonitorableHeader()
 
 	nonEnabledMonitorableCount := 0
 
 	for _, monitorable := range m.monitorables {
 		var enabledVariants []coreModels.VariantName
-		var erroredVariants []cli.ErroredVariant
+		var erroredVariants []helper.ErroredVariant
 
 		for _, variantName := range monitorable.GetVariantsNames() {
 			valid, err := monitorable.Validate(variantName)
 			if err != nil {
-				erroredVariants = append(erroredVariants, cli.ErroredVariant{VariantName: variantName, Errors: err})
+				erroredVariants = append(erroredVariants, helper.ErroredVariant{VariantName: variantName, Errors: err})
 			}
 
 			if valid {
@@ -62,8 +62,8 @@ func (m *Manager) EnableMonitorables() {
 			nonEnabledMonitorableCount++
 		}
 
-		m.store.Cli.PrintMonitorable(monitorable.GetDisplayName(), enabledVariants, erroredVariants)
+		m.store.CliHelper.PrintMonitorable(monitorable.GetDisplayName(), enabledVariants, erroredVariants)
 	}
 
-	m.store.Cli.PrintMonitorableFooter(m.store.CoreConfig.Env == "production", nonEnabledMonitorableCount)
+	m.store.CliHelper.PrintMonitorableFooter(m.store.CoreConfig.Env == "production", nonEnabledMonitorableCount)
 }

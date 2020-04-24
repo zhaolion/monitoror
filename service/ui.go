@@ -9,7 +9,7 @@ import (
 
 func InitUI(s *Server) {
 	if s.store.CoreConfig.Env != "production" {
-		s.store.Cli.PrintDevMode()
+		s.store.CliHelper.PrintDevMode()
 		return
 	}
 

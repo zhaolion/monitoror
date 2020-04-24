@@ -4,12 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	cliMocks "github.com/monitoror/monitoror/cli/mocks"
-	"github.com/monitoror/monitoror/config"
-	coreModels "github.com/monitoror/monitoror/models"
-	"github.com/monitoror/monitoror/service/store"
+	cliMocks "github.com/monitoror/monitoror/cli/helper/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/monitoror/monitoror/config"
+	coreModels "github.com/monitoror/monitoror/models"
+	"github.com/monitoror/monitoror/store"
 )
 
 type monitorableMock struct {
@@ -27,7 +28,7 @@ func (m *monitorableMock) Validate(_ coreModels.VariantName) (bool, []error) {
 func (m *monitorableMock) Enable(_ coreModels.VariantName) {}
 
 func TestManager_EnableMonitorables(t *testing.T) {
-	cliMock := new(cliMocks.CLI)
+	cliMock := new(cliMocks.CLIPrinter)
 	cliMock.On("PrintMonitorableHeader")
 	cliMock.On("PrintMonitorable",
 		mock.AnythingOfType("string"),
@@ -56,7 +57,7 @@ func TestManager_EnableMonitorables(t *testing.T) {
 		CoreConfig: &config.Config{
 			Env: "production",
 		},
-		Cli: cliMock,
+		CliHelper: cliMock,
 	})
 
 	manager.register(mockMonitorable1)

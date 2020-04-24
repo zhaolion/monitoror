@@ -1,18 +1,19 @@
-package cli
+package helper
 
 import (
 	"bytes"
 	"errors"
 	"testing"
 
-	"github.com/monitoror/monitoror/cli/version"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/monitoror/monitoror/cli/version"
 
 	coreModels "github.com/monitoror/monitoror/models"
 )
 
 func TestPrintBanner(t *testing.T) {
-	cli := New()
+	cli := NewCliHelper()
 	output := &bytes.Buffer{}
 	colorer.SetOutput(output)
 	var actual string
@@ -55,7 +56,7 @@ https://monitoror.com
 }
 
 func TestPrintDevMode(t *testing.T) {
-	cli := New()
+	cli := NewCliHelper()
 	output := &bytes.Buffer{}
 	colorer.SetOutput(output)
 	cli.PrintDevMode()
@@ -72,7 +73,7 @@ func TestPrintDevMode(t *testing.T) {
 }
 
 func TestPrintMonitorableHeader(t *testing.T) {
-	cli := New()
+	cli := NewCliHelper()
 	output := &bytes.Buffer{}
 	colorer.SetOutput(output)
 	cli.PrintMonitorableHeader()
@@ -85,7 +86,7 @@ ENABLED MONITORABLES
 }
 
 func TestPrintMonitorable(t *testing.T) {
-	cli := New()
+	cli := NewCliHelper()
 	output := &bytes.Buffer{}
 	colorer.SetOutput(output)
 	var actual string
@@ -187,7 +188,7 @@ func TestPrintMonitorable(t *testing.T) {
 }
 
 func TestPrintMonitorableFooter(t *testing.T) {
-	cli := New()
+	cli := NewCliHelper()
 	output := &bytes.Buffer{}
 	colorer.SetOutput(output)
 
@@ -226,7 +227,7 @@ https://monitoror.com/documentation/
 }
 
 func TestPrintServerStartup(t *testing.T) {
-	cli := New()
+	cli := NewCliHelper()
 	output := &bytes.Buffer{}
 	colorer.SetOutput(output)
 	cli.PrintServerStartup("1.2.3.4", 9999)

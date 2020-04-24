@@ -6,6 +6,12 @@ DEFAULT: build
 
 MAKEFLAGS = --silent
 
+# Forward params if the first argument is "run"...
+ifeq (run,$(firstword $(MAKECMDGOALS)))
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(RUN_ARGS):;@:)
+endif
+
 # ============= TESTS =============
 .PHONY: test
 test: test-unit ## run tests
@@ -76,11 +82,11 @@ package-docker: ## package linux amd64 into docker image
 # ============= RUN =============
 .PHONY: run
 run: ## run monitoror
-	@./scripts/run.sh
+	@./scripts/run.sh $(RUN_ARGS)
 
 .PHONY: run-faker
 run-faker: ## run monitoror in faker mode
-	@MB_GO_TAGS="faker"  ./scripts/run.sh
+	@MB_GO_TAGS="faker" ./scripts/run.sh
 
 # ============= VERSION =============
 .PHONY: version

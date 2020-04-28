@@ -33,7 +33,7 @@ func TestManager_EnableMonitorables(t *testing.T) {
 		validateErrors: nil,
 	}
 	mockMonitorable2 := &monitorableMock{
-		displayName:    "Monitorable mock 2 (faker)",
+		displayName:    "Monitorable mock 2",
 		variants:       []coreModels.VariantName{coreModels.DefaultVariant},
 		validateBool:   false,
 		validateErrors: []error{errors.New("boom"), errors.New("boom2")},

@@ -2,9 +2,7 @@ package version
 
 import (
 	"fmt"
-	"io"
 	"runtime"
-	"text/tabwriter"
 	"text/template"
 
 	"github.com/monitoror/monitoror/cli"
@@ -14,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const versionTemplate = ` Version:	{{green .Version}}{{ if .BuildTags }}{{grey (printf " (%s)" .BuildTags)}}{{end}}
- Git commit:	{{green .GitCommit}}
- Built:	{{green .BuildTime}}
+const versionTemplate = ` Version:    {{green .Version}}{{ with .BuildTags }}{{printf " (%s)" . | grey }}{{end}}
+ Git commit: {{green .GitCommit}}
+ Built:	     {{green .BuildTime}}
 
- Go version:	{{blue .GoVersion}}
- OS/Arch:	{{blue .Os}}/{{blue .Arch}}`
+ Go version: {{blue .GoVersion}}
+ OS/Arch:    {{blue .Os}}/{{blue .Arch}}`
 
 type versionInfo struct {
 	Version   string
@@ -62,14 +60,5 @@ func runVersion(monitororCli *cli.MonitororCli) error {
 		Arch:      runtime.GOARCH,
 	}
 
-	return prettyPrintVersion(monitororCli.GetOutput(), parsedTemplate, vi)
-}
-
-func prettyPrintVersion(output io.Writer, tmpl *template.Template, vi *versionInfo) error {
-	t := tabwriter.NewWriter(output, 1, 4, 1, ' ', 0)
-	err := tmpl.Execute(t, vi)
-	_, _ = t.Write([]byte("\n"))
-	_ = t.Flush()
-
-	return err
+	return parsedTemplate.Execute(monitororCli.GetOutput(), vi)
 }

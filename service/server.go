@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/monitoror/monitoror/pkg/system"
 	"github.com/monitoror/monitoror/service/handlers"
 	"github.com/monitoror/monitoror/service/middlewares"
 	"github.com/monitoror/monitoror/store"
@@ -49,7 +48,6 @@ func Init(store *store.Store) *Server {
 }
 
 func (s *Server) Start() error {
-	s.store.CliHelper.PrintServerStartup(system.GetNetworkIP(), s.store.CoreConfig.Port)
 	return s.Echo.Start(fmt.Sprintf(":%d", s.store.CoreConfig.Port))
 }
 

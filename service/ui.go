@@ -8,8 +8,7 @@ import (
 )
 
 func InitUI(s *Server) {
-	if s.store.CoreConfig.Env != "production" {
-		s.store.CliHelper.PrintDevMode()
+	if s.store.CoreConfig.DisableUI {
 		return
 	}
 

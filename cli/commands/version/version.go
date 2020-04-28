@@ -1,7 +1,8 @@
 package version
 
 import (
-	"os"
+	"fmt"
+	"io"
 	"runtime"
 	"text/tabwriter"
 	"text/template"
@@ -13,12 +14,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var versionTemplate = ` Version:    {{green .Version}}{{ if .BuildTags }}{{grey (printf " (%s)" .BuildTags)}}{{end}}
- Git commit: {{green .GitCommit}}
- Built:      {{green .BuildTime}}
+const versionTemplate = ` Version:	{{green .Version}}{{ if .BuildTags }}{{grey (printf " (%s)" .BuildTags)}}{{end}}
+ Git commit:	{{green .GitCommit}}
+ Built:	{{green .BuildTime}}
 
- Go version: {{blue .GoVersion}}
- OS/Arch:    {{blue .Os}}/{{blue .Arch}}`
+ Go version:	{{blue .GoVersion}}
+ OS/Arch:	{{blue .Os}}/{{blue .Arch}}`
 
 type versionInfo struct {
 	Version   string
@@ -28,6 +29,15 @@ type versionInfo struct {
 	Arch      string
 	BuildTime string
 	BuildTags string
+}
+
+var parsedTemplate *template.Template
+
+func init() {
+	var err error
+	if parsedTemplate, err = templates.NewParse("version", versionTemplate); err != nil {
+		panic(fmt.Sprintf("unable to parse versionTemplate"))
+	}
 }
 
 func NewVersionCommand(monitororCli *cli.MonitororCli) *cobra.Command {
@@ -41,8 +51,8 @@ func NewVersionCommand(monitororCli *cli.MonitororCli) *cobra.Command {
 	return cmd
 }
 
-func runVersion(_ *cli.MonitororCli) error {
-	vi := versionInfo{
+func runVersion(cli *cli.MonitororCli) error {
+	vi := &versionInfo{
 		Version:   version.Version,
 		GitCommit: version.GitCommit,
 		BuildTime: version.BuildTime,
@@ -52,18 +62,14 @@ func runVersion(_ *cli.MonitororCli) error {
 		Arch:      runtime.GOARCH,
 	}
 
-	tmpl, err := templates.New("version").Parse(versionTemplate)
-	if err != nil {
-		return err
-	}
-
-	return prettyPrintVersion(vi, tmpl)
+	return prettyPrintVersion(cli.GetOutput(), parsedTemplate, vi)
 }
 
-func prettyPrintVersion(vi versionInfo, tmpl *template.Template) error {
-	t := tabwriter.NewWriter(os.Stdout, 20, 1, 1, ' ', 0)
+func prettyPrintVersion(output io.Writer, tmpl *template.Template, vi *versionInfo) error {
+	t := tabwriter.NewWriter(output, 1, 4, 1, ' ', 0)
 	err := tmpl.Execute(t, vi)
 	_, _ = t.Write([]byte("\n"))
 	_ = t.Flush()
+
 	return err
 }

@@ -3,7 +3,6 @@ package service
 import (
 	"testing"
 
-	"github.com/monitoror/monitoror/cli/helper"
 	"github.com/monitoror/monitoror/config"
 	"github.com/monitoror/monitoror/registry"
 	"github.com/monitoror/monitoror/store"
@@ -17,7 +16,6 @@ import (
 
 func TestInit_Dev(t *testing.T) {
 	s := &store.Store{
-		CliHelper:  helper.NewCliHelper(),
 		CoreConfig: &config.Config{Env: "develop"},
 		Registry:   registry.NewRegistry(),
 	}
@@ -29,7 +27,6 @@ func TestInit_Dev(t *testing.T) {
 
 func TestInit_Prod_WithoutRicebox(t *testing.T) {
 	s := &store.Store{
-		CliHelper:  helper.NewCliHelper(),
 		CoreConfig: &config.Config{Env: "production"},
 		Registry:   registry.NewRegistry(),
 	}
@@ -42,7 +39,6 @@ func TestInit_Prod_WithoutRicebox(t *testing.T) {
 
 func TestInit_Prod_WithRicebox(t *testing.T) {
 	s := &store.Store{
-		CliHelper:  helper.NewCliHelper(),
 		CoreConfig: &config.Config{Env: "production"},
 		Registry:   registry.NewRegistry(),
 	}

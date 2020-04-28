@@ -22,26 +22,6 @@ var basicFunctions = template.FuncMap{
 	"grey":  color.Grey,
 }
 
-// HeaderFunctions are used to created headers of a table.
-// This is a replacement of basicFunctions for header generation
-// because we want the header to remain intact.
-// Some functions like `pad` are not overridden (to preserve alignment
-// with the columns).
-var HeaderFunctions = template.FuncMap{
-	"split": func(v string, _ string) string {
-		return v
-	},
-	"join": func(v string, _ string) string {
-		return v
-	},
-	"lower": func(v string) string {
-		return v
-	},
-	"upper": func(v string) string {
-		return v
-	},
-}
-
 // Parse creates a new anonymous template with the basic functions
 // and parses the given format.
 func Parse(format string) (*template.Template, error) {

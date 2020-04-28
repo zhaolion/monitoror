@@ -27,18 +27,16 @@ func newMonitororCommand(monitororCli *cli.MonitororCli) {
 		Use:   "monitoror",
 		Short: "Unified monitoring wallboard",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// print banner
-			monitororCli.GetStore().CliHelper.PrintBanner()
-
-			// Start Service
+			// Init Service
 			server := service.Init(monitororCli.GetStore())
+
+			helper.PrintMonitororStartupLog(monitororCli)
 			return server.Start()
 		},
 		Version: fmt.Sprintf("%s, build %s", version.Version, version.GitCommit),
 	}
 
 	cmd.Flags().BoolP("version", "v", false, "Print version information and quit")
-
 	cmd.PersistentFlags().BoolP("debug", "d", false, "Start monitoror in debug mode")
 	_ = viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
 
@@ -62,7 +60,6 @@ func main() {
 
 	// Setup Store
 	store := &store.Store{
-		CliHelper:  helper.NewCliHelper(),
 		CoreConfig: config.InitConfig(),
 		Registry:   registry.NewRegistry(),
 		CacheStore: cache.NewGoCacheStore(time.Minute*5, time.Second), // Default value, Always override
@@ -73,7 +70,7 @@ func main() {
 	newMonitororCommand(monitororCli)
 
 	// Start CLI
-	if err := monitororCli.GetRootCmd().Execute(); err != nil {
+	if err := monitororCli.GetRootCommand().Execute(); err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}

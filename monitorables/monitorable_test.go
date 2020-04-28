@@ -4,9 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	cliMocks "github.com/monitoror/monitoror/cli/helper/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/monitoror/monitoror/config"
 	coreModels "github.com/monitoror/monitoror/models"
@@ -28,18 +26,6 @@ func (m *monitorableMock) Validate(_ coreModels.VariantName) (bool, []error) {
 func (m *monitorableMock) Enable(_ coreModels.VariantName) {}
 
 func TestManager_EnableMonitorables(t *testing.T) {
-	cliMock := new(cliMocks.CLIPrinter)
-	cliMock.On("PrintMonitorableHeader")
-	cliMock.On("PrintMonitorable",
-		mock.AnythingOfType("string"),
-		mock.Anything,
-		mock.Anything,
-	)
-	cliMock.On("PrintMonitorableFooter",
-		mock.AnythingOfType("bool"),
-		mock.AnythingOfType("int"),
-	)
-
 	mockMonitorable1 := &monitorableMock{
 		displayName:    "Monitorable mock 1",
 		variants:       []coreModels.VariantName{coreModels.DefaultVariant},
@@ -57,7 +43,6 @@ func TestManager_EnableMonitorables(t *testing.T) {
 		CoreConfig: &config.Config{
 			Env: "production",
 		},
-		CliHelper: cliMock,
 	})
 
 	manager.register(mockMonitorable1)
@@ -67,12 +52,16 @@ func TestManager_EnableMonitorables(t *testing.T) {
 
 	manager.EnableMonitorables()
 
-	cliMock.AssertNumberOfCalls(t, "PrintMonitorableHeader", 1)
-	cliMock.AssertNumberOfCalls(t, "PrintMonitorable", 2)
-	cliMock.AssertNumberOfCalls(t, "PrintMonitorableFooter", 1)
-	cliMock.AssertCalled(t, "PrintMonitorableFooter", true, 0)
+	// Count non-enable monitorables
+	nonEnabledMonitorable := 0
+	for _, monitorable := range manager.store.MonitorableMetadata {
+		if monitorable.IsDisabled() {
+			nonEnabledMonitorable++
+		}
+	}
 
-	// Count non-enabled monitorables
+	assert.Equal(t, 0, nonEnabledMonitorable)
+
 	mockMonitorable3 := &monitorableMock{
 		displayName:    "Monitorable mock 3",
 		variants:       []coreModels.VariantName{},
@@ -83,5 +72,14 @@ func TestManager_EnableMonitorables(t *testing.T) {
 	assert.Len(t, manager.monitorables, 3)
 
 	manager.EnableMonitorables()
-	cliMock.AssertCalled(t, "PrintMonitorableFooter", true, 1)
+
+	// Count non-enable monitorables
+	nonEnabledMonitorable = 0
+	for _, monitorable := range manager.store.MonitorableMetadata {
+		if monitorable.IsDisabled() {
+			nonEnabledMonitorable++
+		}
+	}
+
+	assert.Equal(t, 1, nonEnabledMonitorable)
 }

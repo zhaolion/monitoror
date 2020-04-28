@@ -3,7 +3,14 @@
 package helper
 
 import (
+	"fmt"
+	"io"
+	"text/tabwriter"
+	"text/template"
+
 	"github.com/monitoror/monitoror/cli"
+	"github.com/monitoror/monitoror/cli/version"
+	"github.com/monitoror/monitoror/pkg/templates"
 )
 
 const (
@@ -55,12 +62,47 @@ Monitoror is running at:
 `
 )
 
-func PrintMonitororStartupLog(monitororCli *cli.MonitororCli) {
+var monitororTemplate = `
+    __  ___            _ __
+   /  |/  /___  ____  (_) /_____  _________  _____
+  / /|_/ / __ \/ __ \/ / __/ __ \/ ___/ __ \/ ___/
+ / /  / / /_/ / / / / / /_/ /_/ / /  / /_/ / / %s
+/_/  /_/\____/_/ /_/_/\__/\____/_/   \____/_/  {{.Version}}
 
+{{blue "https://monitoror.com"}}
+
+`
+
+type monitororInfo struct {
+	Version   string
+	BuildTags string
 }
 
-func prettyPrintMonitororStartupLog() {
+var parsedTemplate *template.Template
 
+func init() {
+	var err error
+	if parsedTemplate, err = templates.NewParse("monitoror", monitororTemplate); err != nil {
+		panic(fmt.Errorf("unable to parse monitororTemplate. %v", err))
+	}
+}
+
+func PrintMonitororStartupLog(monitororCli *cli.MonitororCli) error {
+	mi := &monitororInfo{
+		Version:   version.Version,
+		BuildTags: version.BuildTags,
+	}
+
+	return prettyPrintMonitororStartupLog(monitororCli.GetOutput(), parsedTemplate, mi)
+}
+
+func prettyPrintMonitororStartupLog(output io.Writer, tmpl *template.Template, mi *monitororInfo) error {
+	t := tabwriter.NewWriter(output, 1, 4, 1, ' ', 0)
+	err := tmpl.Execute(t, mi)
+	_, _ = t.Write([]byte("\n"))
+	_ = t.Flush()
+
+	return err
 }
 
 //func (p *Printer) PrintBanner() {

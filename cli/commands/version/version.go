@@ -36,7 +36,7 @@ var parsedTemplate *template.Template
 func init() {
 	var err error
 	if parsedTemplate, err = templates.NewParse("version", versionTemplate); err != nil {
-		panic(fmt.Sprintf("unable to parse versionTemplate"))
+		panic(fmt.Errorf("unable to parse versionTemplate. %v", err))
 	}
 }
 
@@ -51,7 +51,7 @@ func NewVersionCommand(monitororCli *cli.MonitororCli) *cobra.Command {
 	return cmd
 }
 
-func runVersion(cli *cli.MonitororCli) error {
+func runVersion(monitororCli *cli.MonitororCli) error {
 	vi := &versionInfo{
 		Version:   version.Version,
 		GitCommit: version.GitCommit,
@@ -62,7 +62,7 @@ func runVersion(cli *cli.MonitororCli) error {
 		Arch:      runtime.GOARCH,
 	}
 
-	return prettyPrintVersion(cli.GetOutput(), parsedTemplate, vi)
+	return prettyPrintVersion(monitororCli.GetOutput(), parsedTemplate, vi)
 }
 
 func prettyPrintVersion(output io.Writer, tmpl *template.Template, vi *versionInfo) error {

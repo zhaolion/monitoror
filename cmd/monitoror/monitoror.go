@@ -30,7 +30,9 @@ func newMonitororCommand(monitororCli *cli.MonitororCli) {
 			// Init Service
 			server := service.Init(monitororCli.GetStore())
 
-			helper.PrintMonitororStartupLog(monitororCli)
+			if err := helper.PrintMonitororStartupLog(monitororCli); err != nil {
+				return err
+			}
 			return server.Start()
 		},
 		Version: fmt.Sprintf("%s, build %s", version.Version, version.GitCommit),

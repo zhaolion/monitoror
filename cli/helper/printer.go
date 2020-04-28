@@ -17,48 +17,47 @@ var monitororTemplate = `
     __  ___            _ __
    /  |/  /___  ____  (_) /_____  _________  _____
   / /|_/ / __ \/ __ \/ / __/ __ \/ ___/ __ \/ ___/
- / /  / / /_/ / / / / / /_/ /_/ / /  / /_/ / / {{ with .BuildTags }}{{ printf " %s " . | inverse }}{{ end }}
+ / /  / / /_/ / / / / / /_/ /_/ / /  / /_/ / / {{ with .BuildTags }}{{ printf " %s " . | inverseColor }}{{ end }}
 /_/  /_/\____/_/ /_/_/\__/\____/_/   \____/_/  {{ green .Version }}
 
 {{ blue "https://monitoror.com" }}
 
-{{- if .DisableUI }}
 
+{{if .DisableUI -}}
 ┌─ {{ yellow "DEVELOPMENT MODE" }} ──────────────────────────────┐
 │ UI must be started via {{ green "yarn serve" }} from ./ui     │
 │ For more details, check our development guide:  │
 │ {{ blue "https://monitoror.com/guides/#development" }}       │
 └─────────────────────────────────────────────────┘
 
-{{- end }}
 
+{{end -}}
 {{ green "ENABLED MONITORABLES" }}
-{{range .MonitorableMetadata -}}
-{{- if not .IsDisabled }}
-{{- if not .ErroredVariantMetadata }}
-  {{ green "✓" }} {{ .MonitorableName }} {{ stringifyEnabledVariantNames . | grey }}
-{{- else if .EnabledVariantNames}}
-  {{ yellow "!" }} {{ .MonitorableName }} {{ stringifyEnabledVariantNames . | grey }}
-{{- else }}
-  {{ red "x" }} {{ .MonitorableName }} {{ stringifyEnabledVariantNames . | grey }}
-{{- end }}
-{{- range .ErroredVariantMetadata }}
-{{- if eq .VariantName "` + string(coreModels.DefaultVariant) + `" }}
+{{range .Monitorables }}{{ if .Enabled }}
+
+  {{- if not .ErroredVariants }}
+  {{ green "✓ "}}
+  {{- else if .EnabledVariants}}
+  {{ yellow "! "}}
+  {{- else }}
+  {{ red "x " }}
+  {{- end }}
+{{- .MonitorableName }} {{ .StrEnabledVariants | grey }}
+
+  {{- range .ErroredVariants }}
+    {{- if eq .VariantName "` + string(coreModels.DefaultVariant) + `" }}
     {{ printf "/!\\ Errored %s configuration" .VariantName | red }}
-{{- else }}
+    {{- else }}
     {{ printf "/!\\ Errored %q variant configuration" .VariantName | red }}
-{{- end }}
-{{- range .Errors }}
-      {{ .Error }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{$disabledMonitorableCount := countDisabledMonitorable . -}}
-{{- if ne $disabledMonitorableCount 0 }}
-{{ printf "%d more monitorables were ignored" $disabledMonitorableCount | yellow }}
+    {{- end }}
+    {{range .Errors }}{{ .Error }}{{ end }}
+  {{- end }}
+{{- end }}{{- end }}
+
+{{if .DisabledMonitorableCount -}}
+{{ printf "%d more monitorables were ignored" .DisabledMonitorableCount | yellow }}
 Check the documentation to know how to enabled them:
-{{ extractDocumentationVersion .Version | printf "https://monitoror.com/%sdocumentation/" | blue }}
+{{ printf "https://monitoror.com/%sdocumentation/" .DocumentationVersion | blue }}
 
 {{- end }}
 
@@ -67,44 +66,66 @@ Monitoror is running at:
   {{ printf "http://%s:%d" .LookupAddress .LookupPort | blue }}
 `
 
-type monitororInfo struct {
-	Version             string
-	BuildTags           string
-	DisableUI           bool
-	MonitorableMetadata []monitorable.Metadata
-	LookupPort          int
-	LookupAddress       string
-}
+type (
+	monitororInfo struct {
+		Version              string
+		DocumentationVersion string
+		BuildTags            string
+
+		DisableUI                bool
+		DisabledMonitorableCount int
+
+		Monitorables []monitorableInfo
+
+		LookupPort    int
+		LookupAddress string
+	}
+
+	monitorableInfo struct {
+		Enabled         bool
+		MonitorableName string
+
+		EnabledVariants    []coreModels.VariantName
+		StrEnabledVariants string
+
+		ErroredVariants []monitorable.ErroredVariantMetadata
+	}
+)
 
 var parsedTemplate *template.Template
 
 func init() {
-	parsedTemplate = templates.New("monitoror")
-	parsedTemplate.Funcs(map[string]interface{}{
-		"stringifyEnabledVariantNames": StringifyEnabledVariantNames,
-		"countDisabledMonitorable":     CountDisabledMonitorable,
-		"extractDocumentationVersion":  ExtractDocumentationVersion,
-	})
-
-	if _, err := parsedTemplate.Parse(monitororTemplate); err != nil {
+	var err error
+	if parsedTemplate, err = templates.NewParse("monitoror", monitororTemplate); err != nil {
 		panic(fmt.Errorf("unable to parse monitororTemplate. %v", err))
 	}
 }
 
 func PrintMonitororStartupLog(monitororCli *cli.MonitororCli) error {
 	mi := &monitororInfo{
-		Version:             version.Version,
-		BuildTags:           version.BuildTags,
-		DisableUI:           monitororCli.GetStore().CoreConfig.DisableUI,
-		MonitorableMetadata: monitororCli.GetStore().MonitorableMetadata,
-		LookupPort:          monitororCli.GetStore().CoreConfig.Port,
-		LookupAddress:       system.GetNetworkIP(),
+		Version:                  version.Version,
+		DocumentationVersion:     ExtractDocumentationVersion(version.Version),
+		BuildTags:                version.BuildTags,
+		DisableUI:                monitororCli.GetStore().CoreConfig.DisableUI,
+		DisabledMonitorableCount: CountDisabledMonitorable(monitororCli.GetStore().MonitorableMetadata),
+		LookupPort:               monitororCli.GetStore().CoreConfig.Port,
+		LookupAddress:            system.GetNetworkIP(),
+	}
+
+	for _, mm := range monitororCli.GetStore().MonitorableMetadata {
+		mi.Monitorables = append(mi.Monitorables, monitorableInfo{
+			MonitorableName:    mm.MonitorableName,
+			Enabled:            !mm.IsDisabled(),
+			EnabledVariants:    mm.EnabledVariantNames,
+			StrEnabledVariants: StringifyEnabledVariantNames(mm),
+			ErroredVariants:    mm.ErroredVariantMetadata,
+		})
 	}
 
 	return parsedTemplate.Execute(monitororCli.GetOutput(), mi)
 }
 
-func StringifyEnabledVariantNames(m *monitorable.Metadata) string {
+func StringifyEnabledVariantNames(m monitorable.Metadata) string {
 	var strVariants string
 	if len(m.EnabledVariantNames) == 1 && m.EnabledVariantNames[0] == coreModels.DefaultVariant {
 		if len(m.ErroredVariantMetadata) > 0 {
@@ -129,9 +150,9 @@ func StringifyEnabledVariantNames(m *monitorable.Metadata) string {
 	return strVariants
 }
 
-func CountDisabledMonitorable(mi *monitororInfo) int {
+func CountDisabledMonitorable(mm []monitorable.Metadata) int {
 	disabledMonitorableCount := 0
-	for _, m := range mi.MonitorableMetadata {
+	for _, m := range mm {
 		if m.IsDisabled() {
 			disabledMonitorableCount++
 		}

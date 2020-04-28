@@ -16,12 +16,12 @@ var basicFunctions = template.FuncMap{
 	"upper": strings.ToUpper,
 
 	// For terminal only
-	"blue":    color.Blue,
-	"green":   color.Green,
-	"red":     color.Red,
-	"yellow":  color.Yellow,
-	"grey":    color.Grey,
-	"inverse": color.Inverse,
+	"blue":         color.Blue,
+	"green":        color.Green,
+	"red":          color.Red,
+	"yellow":       color.Yellow,
+	"grey":         color.Grey,
+	"inverseColor": color.Inverse,
 }
 
 // Parse creates a new anonymous template with the basic functions

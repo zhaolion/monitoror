@@ -56,6 +56,7 @@ Monitoror is running at:
 )
 
 func PrintMonitororStartupLog(monitororCli *cli.MonitororCli) {
+
 }
 
 func prettyPrintMonitororStartupLog() {

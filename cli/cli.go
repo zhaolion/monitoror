@@ -4,9 +4,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/monitoror/monitoror/store"
+
+	"github.com/spf13/cobra"
 )
 
 type MonitororCli struct {

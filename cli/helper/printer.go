@@ -1,5 +1,3 @@
-//go:generate mockery -name CLIPrinter
-
 package helper
 
 import (

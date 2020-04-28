@@ -14,32 +14,9 @@ import (
 )
 
 const (
-	website           = "https://monitoror.com"
-	developmentGuides = "https://monitoror.com/guides/#development"
-	documentation     = "https://monitoror.com/" + "%s" + "documentation/"
+	documentation = "https://monitoror.com/" + "%s" + "documentation/"
 
 	errorSymbol = `/!\`
-
-	banner = `
-    __  ___            _ __
-   /  |/  /___  ____  (_) /_____  _________  _____
-  / /|_/ / __ \/ __ \/ / __/ __ \/ ___/ __ \/ ___/
- / /  / / /_/ / / / / / /_/ /_/ / /  / /_/ / / %s
-/_/  /_/\____/_/ /_/_/\__/\____/_/   \____/_/  %s
-
-%s
-
-`
-	devModeTitle   = ` DEVELOPMENT MODE `
-	uiStartCommand = `yarn serve`
-	devMode        = `
-┌─%s──────────────────────────────┐
-│ UI must be started via %s from ./ui     │
-│ For more details, check our development guide:  │
-│ %s       │
-└─────────────────────────────────────────────────┘
-
-`
 
 	monitorableHeader = `
 ENABLED MONITORABLES
@@ -66,16 +43,25 @@ var monitororTemplate = `
     __  ___            _ __
    /  |/  /___  ____  (_) /_____  _________  _____
   / /|_/ / __ \/ __ \/ / __/ __ \/ ___/ __ \/ ___/
- / /  / / /_/ / / / / / /_/ /_/ / /  / /_/ / / %s
-/_/  /_/\____/_/ /_/_/\__/\____/_/   \____/_/  {{.Version}}
+ / /  / / /_/ / / / / / /_/ /_/ / /  / /_/ / / {{ if .BuildTags }}{{ inverse (printf " %s " .BuildTags) }}{{ end }}
+/_/  /_/\____/_/ /_/_/\__/\____/_/   \____/_/  {{ green .Version }}
 
-{{blue "https://monitoror.com"}}
+{{ blue "https://monitoror.com" }}
+{{ if .DisableUI }}
+┌─ {{ yellow "DEVELOPMENT MODE" }} ──────────────────────────────┐
+│ UI must be started via {{ green "yarn serve" }} from ./ui     │
+│ For more details, check our development guide:  │
+│ {{ blue "https://monitoror.com/guides/#development" }}       │
+└─────────────────────────────────────────────────┘
+{{ end }}
+{{ green "ENABLED MONITORABLES" }}
 
 `
 
 type monitororInfo struct {
 	Version   string
 	BuildTags string
+	DisableUI bool
 }
 
 var parsedTemplate *template.Template
@@ -91,6 +77,7 @@ func PrintMonitororStartupLog(monitororCli *cli.MonitororCli) error {
 	mi := &monitororInfo{
 		Version:   version.Version,
 		BuildTags: version.BuildTags,
+		DisableUI: monitororCli.GetStore().CoreConfig.DisableUI,
 	}
 
 	return prettyPrintMonitororStartupLog(monitororCli.GetOutput(), parsedTemplate, mi)

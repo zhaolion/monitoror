@@ -31,36 +31,37 @@ var monitororTemplate = `
 └─────────────────────────────────────────────────┘
 
 
-{{end -}}
+{{ end -}}
 {{ green "ENABLED MONITORABLES" }}
-{{range .Monitorables }}{{ if .Enabled }}
+{{range .Monitorables }}{{ if not .IsDisabled }}
 
-  {{- if not .ErroredVariants }}
+  {{- if not .Metadata.ErroredVariantMetadata }}
   {{ green "✓ "}}
-  {{- else if .EnabledVariants}}
+  {{- else if .Metadata.EnabledVariantNames}}
   {{ yellow "! "}}
   {{- else }}
   {{ red "x " }}
   {{- end }}
-{{- .MonitorableName }} {{ .StrEnabledVariants | grey }}
+  {{- .Metadata.MonitorableName }} {{ .StrEnabledVariants | grey }}
 
-  {{- range .ErroredVariants }}
+  {{- range .Metadata.ErroredVariantMetadata }}
     {{- if eq .VariantName "` + string(coreModels.DefaultVariant) + `" }}
     {{ printf "/!\\ Errored %s configuration" .VariantName | red }}
     {{- else }}
     {{ printf "/!\\ Errored %q variant configuration" .VariantName | red }}
     {{- end }}
-    {{range .Errors }}{{ .Error }}{{ end }}
+    {{- range .Errors }}
+      {{ .Error }}
+    {{- end }}
   {{- end }}
 {{- end }}{{- end }}
 
-{{if .DisabledMonitorableCount -}}
+{{if ne .DisabledMonitorableCount 0 -}}
 {{ printf "%d more monitorables were ignored" .DisabledMonitorableCount | yellow }}
 Check the documentation to know how to enabled them:
 {{ printf "https://monitoror.com/%sdocumentation/" .DocumentationVersion | blue }}
 
-{{- end }}
-
+{{ end }}
 Monitoror is running at:
   {{ printf "http://localhost:%d" .LookupPort | blue }}
   {{ printf "http://%s:%d" .LookupAddress .LookupPort | blue }}
@@ -68,27 +69,20 @@ Monitoror is running at:
 
 type (
 	monitororInfo struct {
-		Version              string
-		DocumentationVersion string
-		BuildTags            string
+		Version              string // From ldflags
+		DocumentationVersion string // Truncated version without minor and -dev
+		BuildTags            string // From ldflagsl
+		LookupPort           int    // From .env
+		LookupAddress        string // From system
 
-		DisableUI                bool
-		DisabledMonitorableCount int
-
-		Monitorables []monitorableInfo
-
-		LookupPort    int
-		LookupAddress string
+		DisableUI                bool // From .env
+		DisabledMonitorableCount int  // Count disabled monitorable.Metadata from store
+		Monitorables             []monitorableInfo
 	}
 
 	monitorableInfo struct {
-		Enabled         bool
-		MonitorableName string
-
-		EnabledVariants    []coreModels.VariantName
-		StrEnabledVariants string
-
-		ErroredVariants []monitorable.ErroredVariantMetadata
+		monitorable.Metadata        // From store
+		StrEnabledVariants   string // Compute from Metadata
 	}
 )
 
@@ -114,11 +108,8 @@ func PrintMonitororStartupLog(monitororCli *cli.MonitororCli) error {
 
 	for _, mm := range monitororCli.GetStore().MonitorableMetadata {
 		mi.Monitorables = append(mi.Monitorables, monitorableInfo{
-			MonitorableName:    mm.MonitorableName,
-			Enabled:            !mm.IsDisabled(),
-			EnabledVariants:    mm.EnabledVariantNames,
+			Metadata:           mm,
 			StrEnabledVariants: StringifyEnabledVariantNames(mm),
-			ErroredVariants:    mm.ErroredVariantMetadata,
 		})
 	}
 
